@@ -1,49 +1,88 @@
-import matplotlib.cm as cm
 import numpy as np
 import tensorflow as tf
-from PIL import Image
 from tensorflow.keras.layers import Conv2D, DepthwiseConv2D
-from tensorflow.keras.preprocessing.image import img_to_array, load_img
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+import matplotlib.cm as cm
+from PIL import Image
 
 from src import config
 
 
-# new — find last conv layer and compute grad-cam heatmap
-def get_heatmap(model, img_arr):
-    # find last conv layer
-    last_conv = None
-    for layer in reversed(model.layers):
+# find the last conv layer searching nested models too
+# returns the conv layer object (inside backbone if nested)
+# and the backbone model it lives in (or None if top-level)
+def _find_last_conv(model):
+    last_conv, last_backbone = None, None
+    for layer in model.layers:
         if isinstance(layer, (Conv2D, DepthwiseConv2D)):
-            last_conv = layer.name
-            break
-        # check inside nested models (e.g. mobilenetv2 base)
-        if hasattr(layer, 'layers'):
-            for sub in reversed(layer.layers):
+            last_conv, last_backbone = layer, None
+        elif hasattr(layer, 'layers'):
+            for sub in layer.layers:
                 if isinstance(sub, (Conv2D, DepthwiseConv2D)):
-                    last_conv = sub.name
-                    # build sub-model to expose this layer
-                    break
-            if last_conv:
-                break
+                    last_conv, last_backbone = sub, layer
+    return last_conv, last_backbone
 
-    # build grad model up to last conv layer output + final predictions
-    grad_model = _build_grad_model(model, last_conv)
 
+# build a single flat grad_model: outer_input -> [conv_output, predictions]
+# works by building backbone sub-model from its own input->conv_output,
+# then stitching with the outer model's symbolic graph
+def _make_grad_model(model):
+    conv_layer, backbone = _find_last_conv(model)
+    if conv_layer is None:
+        raise ValueError("No Conv2D/DepthwiseConv2D found in model")
+
+    if backbone is not None:
+        # backbone is a nested functional model (e.g. ResNet50, VGG16, MobileNetV2)
+        # build sub: backbone.input -> conv.output  (clean internal graph)
+        conv_sub = tf.keras.Model(backbone.input, conv_layer.output)
+        # stitch: outer_input -> [conv_sub(backbone.input_in_outer), model.output]
+        # backbone.input in the outer graph = output of whichever layer feeds it
+        # that tensor is backbone's inbound node input
+        backbone_input_tensor = backbone.input  # symbolic, belongs to backbone's own graph
+
+        # get the tensor from the OUTER model that feeds into backbone
+        # it's stored in backbone._inbound_nodes[0].input_tensors
+        try:
+            outer_feed = backbone._inbound_nodes[0].input_tensors
+            if isinstance(outer_feed, list):
+                outer_feed = outer_feed[0]
+        except (IndexError, AttributeError):
+            outer_feed = None
+
+        if outer_feed is not None:
+            conv_out_tensor = conv_sub(outer_feed)
+            grad_model = tf.keras.Model(model.input, [conv_out_tensor, model.output])
+            return grad_model
+
+    # top-level conv or fallback
+    grad_model = tf.keras.Model(model.inputs, [conv_layer.output, model.output])
+    return grad_model
+
+
+# new — compute grad-cam heatmap
+def get_heatmap(model, img_arr):
+    grad_model = _make_grad_model(model)
     img_tensor = tf.cast(img_arr, tf.float32)
 
     with tf.GradientTape() as tape:
-        fmaps, preds = grad_model(img_tensor)
+        conv_out, preds = grad_model(img_tensor)
+        tape.watch(conv_out)
         pred_idx = tf.argmax(preds[0])
         score = preds[:, pred_idx]
 
-    grads = tape.gradient(score, fmaps)
-    pooled = tf.reduce_mean(grads, axis=(0, 1, 2))
+    grads = tape.gradient(score, conv_out)
 
-    cam = fmaps[0] @ pooled[..., tf.newaxis]
+    if grads is None:
+        raise RuntimeError(
+            "Grad-CAM: gradient is None. "
+            "The conv layer output is not connected to the model output in the gradient graph."
+        )
+
+    pooled = tf.reduce_mean(grads, axis=(0, 1, 2))
+    cam = conv_out[0] @ pooled[..., tf.newaxis]
     cam = tf.squeeze(cam)
     cam = tf.nn.relu(cam)
 
-    # resize and normalize
     hm = cam.numpy()
     hm = np.maximum(hm, 0)
     if hm.max() != 0:
@@ -53,23 +92,6 @@ def get_heatmap(model, img_arr):
     hm = np.array(Image.fromarray(hm).resize(config.img_shape, Image.BILINEAR))
     hm = hm / 255.0
     return hm
-
-
-def _build_grad_model(model, last_conv_name):
-    # walk model layers to find output of last conv
-    for layer in model.layers:
-        if layer.name == last_conv_name:
-            return tf.keras.Model(model.inputs, [layer.output, model.output])
-        if hasattr(layer, 'layers'):
-            for sub in layer.layers:
-                if sub.name == last_conv_name:
-                    # expose via sub-model
-                    output = layer.output if hasattr(layer, 'output') else model.layers[1].output
-                    sub_out = tf.keras.Model(layer.input, sub.output)(output)
-                    # rebuild: input -> conv_out, input -> final_out
-                    return tf.keras.Model(model.inputs, [sub_out, model.output])
-    # fallback: use last layer before dense head
-    raise ValueError(f"Could not find layer: {last_conv_name}")
 
 
 # new — overlay heatmap on original image

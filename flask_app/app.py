@@ -1,10 +1,10 @@
 import os
 import uuid
-
+from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
-
+load_dotenv()
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 

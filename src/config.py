@@ -17,7 +17,7 @@ img_shape = (224, 224)
 batch_size = 32
 split_ratio = 0.1
 aug_count = 3
-epochs = 10
+epochs = 1
 patience = 5
 class_labels = ["minor", "moderate", "severe"]
 
