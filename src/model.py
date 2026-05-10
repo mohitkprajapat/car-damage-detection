@@ -1,13 +1,14 @@
 import tensorflow as tf
-from tensorflow.keras.applications import MobileNetV2, ResNet50, VGG16
-from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense, BatchNormalization
+from tensorflow.keras.applications import VGG16, MobileNetV2, ResNet50
+from tensorflow.keras.layers import BatchNormalization, Dense, Dropout, GlobalAveragePooling2D
 
 
 # original notebook code — do not modify
 def transfer_model(hp):
+    models = ['resnet50', 'mobnetv2', 'vgg16', 'resnet50-165', 'mobnetv2-143', 'vgg16-15']
     input_image = (224, 224, 3)
     inputs = tf.keras.Input(shape=input_image)
-    base = hp.Choice('base model', ['resnet50', 'mobnetv2', 'vgg16', 'resnet50-165', 'mobnetv2-143', 'vgg16-15'])
+    base = hp.Choice('base model', models)
     bm_list = base.split('-')
     base_mod = bm_list[0]
 
@@ -23,7 +24,7 @@ def transfer_model(hp):
            include_top=False,
            weights='imagenet')
         base_model.trainable = True
-        if mob_net_fine_tune_at != None:
+        if mob_net_fine_tune_at is not None:
             for layer in base_model.layers[:mob_net_fine_tune_at]:
                 layer.trainable = False
         else:
@@ -37,7 +38,7 @@ def transfer_model(hp):
            include_top=False,
            weights='imagenet')
         base_model.trainable = True
-        if resnet_fine_tune_at != None:
+        if resnet_fine_tune_at is not None:
             for layer in base_model.layers[:resnet_fine_tune_at]:
                 layer.trainable = False
         else:
@@ -51,7 +52,7 @@ def transfer_model(hp):
            include_top=False,
            weights='imagenet')
         base_model.trainable = True
-        if vggnet_fine_tune_at != None:
+        if vggnet_fine_tune_at is not None:
             for layer in base_model.layers[:vggnet_fine_tune_at]:
                 layer.trainable = False
         else:
@@ -66,15 +67,21 @@ def transfer_model(hp):
     x = GlobalAveragePooling2D()(x)
     x = Dropout(rate=dropout_rate)(x)
 
-    x = Dense(units=512, kernel_regularizer=tf.keras.regularizers.L2(l2=L2_reg_rate), activation='relu')(x)
+    x = Dense(units=512, 
+              kernel_regularizer=tf.keras.regularizers.L2(l2=L2_reg_rate), 
+              activation='relu')(x)
     x = BatchNormalization()(x)
     x = Dropout(rate=dropout_rate)(x)
 
-    x = Dense(units=128, kernel_regularizer=tf.keras.regularizers.L2(l2=L2_reg_rate), activation='relu')(x)
+    x = Dense(units=128, 
+              kernel_regularizer=tf.keras.regularizers.L2(l2=L2_reg_rate), 
+              activation='relu')(x)
     x = BatchNormalization()(x)
     x = Dropout(rate=dropout_rate)(x)
 
-    outputs = Dense(units=3, kernel_regularizer=tf.keras.regularizers.L2(l2=L2_reg_rate), activation='softmax')(x)
+    outputs = Dense(units=3, 
+                    kernel_regularizer=tf.keras.regularizers.L2(l2=L2_reg_rate), 
+                    activation='softmax')(x)
 
     model = tf.keras.Model(inputs, outputs)
 

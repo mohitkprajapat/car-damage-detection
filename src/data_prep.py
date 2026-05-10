@@ -1,8 +1,14 @@
 import os
-import shutil
 import random
+import shutil
+
+from tensorflow.keras.preprocessing.image import (
+    ImageDataGenerator,
+    array_to_img,
+    img_to_array,
+    load_img,
+)
 from tqdm import tqdm
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img, array_to_img
 
 from src import config
 
@@ -18,7 +24,8 @@ def split_data():
 
     for class_name in class_labels:
         src_class_dir = os.path.join(source_dir, class_name)
-        images = [f for f in os.listdir(src_class_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        file_ext = ('.jpg', '.jpeg', '.png')
+        images = [f for f in os.listdir(src_class_dir) if f.lower().endswith(file_ext)]
         random.shuffle(images)
 
         split_index = int(len(images) * split_ratio)

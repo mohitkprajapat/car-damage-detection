@@ -1,10 +1,11 @@
 import math
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
 from PIL import Image
+from sklearn.metrics import confusion_matrix
 
 from src import config
 
@@ -70,7 +71,9 @@ def show_misclassified(model, test_data):
         img = Image.open(img_path)
         plt.subplot(row, 3, j)
         plt.imshow(img)
-        plt.title(f"True: {config.class_labels[y_true_test[i]]}, Pred: {config.class_labels[y_hat_test[i]]}")
+        true_val = config.class_labels[y_true_test[i]]
+        pred_val = config.class_labels[y_hat_test[i]]
+        plt.title(f"True: {true_val}, Pred: {pred_val}")
         plt.axis("off")
         j += 1
 

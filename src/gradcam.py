@@ -1,9 +1,9 @@
+import matplotlib.cm as cm
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, DepthwiseConv2D
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
-import matplotlib.cm as cm
 from PIL import Image
+from tensorflow.keras.layers import Conv2D, DepthwiseConv2D
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 from src import config
 
@@ -64,7 +64,8 @@ def _build_grad_model(model, last_conv_name):
             for sub in layer.layers:
                 if sub.name == last_conv_name:
                     # expose via sub-model
-                    sub_out = tf.keras.Model(layer.input, sub.output)(layer.output if hasattr(layer, 'output') else model.layers[1].output)
+                    output = layer.output if hasattr(layer, 'output') else model.layers[1].output
+                    sub_out = tf.keras.Model(layer.input, sub.output)(output)
                     # rebuild: input -> conv_out, input -> final_out
                     return tf.keras.Model(model.inputs, [sub_out, model.output])
     # fallback: use last layer before dense head

@@ -1,6 +1,7 @@
 import math
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
@@ -12,10 +13,18 @@ def get_datasets():
     image_shape = config.img_shape
 
     train_ds = tf.keras.utils.image_dataset_from_directory(
-        directory=config.train_aug_dir, label_mode="categorical", image_size=image_shape, batch_size=config.batch_size, shuffle=True)
+        directory=config.train_aug_dir, 
+        label_mode="categorical", 
+        image_size=image_shape, 
+        batch_size=config.batch_size, 
+        shuffle=True)
 
     val_ds = tf.keras.utils.image_dataset_from_directory(
-        directory=config.val_dir, label_mode="categorical", image_size=image_shape, batch_size=config.batch_size, shuffle=True)
+        directory=config.val_dir, 
+        label_mode="categorical", 
+        image_size=image_shape, 
+        batch_size=config.batch_size, 
+        shuffle=True)
 
     # Optimize performance
     AUTOTUNE = tf.data.AUTOTUNE

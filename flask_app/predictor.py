@@ -1,22 +1,22 @@
 import os
 import uuid
+
 import tensorflow as tf
 
-from src import config
-from src import gradcam
+from src import config, gradcam
 
 
 # new
 class Predictor:
     def __init__(self):
         if not os.path.exists(config.model_path):
-            raise FileNotFoundError(f"Model not found at {config.model_path}. Train the model first.")
+            raise FileNotFoundError("Model not found. Train the model first.")
         self.model = tf.keras.models.load_model(config.model_path)
         self.labels = config.class_labels
 
     def predict(self, img_path):
-        from tensorflow.keras.preprocessing.image import load_img, img_to_array
         import numpy as np
+        from tensorflow.keras.preprocessing.image import img_to_array, load_img
         img = load_img(img_path, target_size=config.img_shape)
         arr = img_to_array(img)
         arr = np.expand_dims(arr, axis=0)

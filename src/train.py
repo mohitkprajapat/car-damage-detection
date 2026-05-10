@@ -1,9 +1,10 @@
 import os
-import tensorflow as tf
+
 import keras_tuner as kt
+import tensorflow as tf
 
 from src import config
-from src.data_prep import split_data, augment_data
+from src.data_prep import augment_data, split_data
 from src.dataset import get_datasets
 from src.model import transfer_model
 
