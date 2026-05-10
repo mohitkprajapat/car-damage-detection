@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analysis Result — Car Damage Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="site-title">Car Damage Severity Detector</h1>
+      <p class="site-subtitle">AI-powered insurance damage assessment</p>
+    </div>
+  </header>
+
+  <main class="container main-content">
+
+    <section class="result-top card">
+      <div class="result-grid">
+
+        <div class="result-image-col">
+          <h2 class="col-heading">Uploaded Image</h2>
+          <img src="{{ url_for('static', filename='uploads/' + uploaded) }}" alt="Uploaded car image" class="result-img" />
+        </div>
+
+        <div class="result-details-col">
+          <h2 class="col-heading">Prediction</h2>
+
+          <div class="pred-badge-wrap">
+            <span class="pred-badge badge-{{ pred_class }}">{{ pred_class | capitalize }}</span>
+          </div>
+
+          <div class="confidence-block">
+            <p class="confidence-label">Confidence: <strong>{{ confidence }}%</strong></p>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill fill-{{ pred_class }}" style="width: {{ confidence }}%"></div>
+            </div>
+          </div>
+
+          <div class="prob-bars">
+            <h3>Class Probabilities</h3>
+            {% for label, pct in probs.items() %}
+            <div class="prob-row">
+              <span class="prob-label">{{ label | capitalize }}</span>
+              <div class="prob-track">
+                <div class="prob-fill fill-{{ label }}" style="width: {{ pct }}%"></div>
+              </div>
+              <span class="prob-pct">{{ pct }}%</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gradcam-section card">
+      <h2>Grad-CAM Visualization</h2>
+      <p class="gradcam-caption">Regions highlighted in red/yellow indicate areas the model focused on.</p>
+      <img src="{{ url_for('static', filename='uploads/' + gradcam) }}" alt="Grad-CAM heatmap overlay" class="gradcam-img" />
+    </section>
+
+    <div class="back-wrap">
+      <a href="{{ url_for('index') }}" class="btn btn-primary">&#8592; Analyze Another Image</a>
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Powered by Transfer Learning &mdash; VGG16, ResNet50, MobileNetV2</p>
+      <a href="{{ url_for('about') }}" class="footer-link">About</a>
+    </div>
+  </footer>
+</body>
+</html>

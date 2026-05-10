@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Car Damage Severity Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="site-title">Car Damage Severity Detector</h1>
+      <p class="site-subtitle">AI-powered insurance damage assessment</p>
+    </div>
+  </header>
+
+  <main class="container main-content">
+
+    {% if error %}
+    <div class="alert alert-error">
+      <strong>Model unavailable:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    {% if show_about %}
+    <div class="about-card card">
+      <h2>About This Tool</h2>
+      <p>This system uses deep learning (transfer learning with VGG16, ResNet50, and MobileNetV2) to classify car damage images into three severity levels. It was built to automate parts of the insurance claim review process.</p>
+      <p>Grad-CAM visualizations highlight the image regions the model focused on when making a prediction.</p>
+      <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Detector</a>
+    </div>
+    {% else %}
+
+    <section class="upload-section card">
+      <form action="/predict" method="POST" enctype="multipart/form-data" id="upload-form">
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-zone-content" id="drop-text">
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 16V8m0 0-3 3m3-3 3 3M20 16.7A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>
+            </svg>
+            <p>Drag &amp; drop an image here, or <span class="link-text">click to browse</span></p>
+            <p class="hint">Supports JPG, PNG</p>
+          </div>
+          <img id="preview-img" class="preview-img hidden" src="" alt="Preview" />
+          <input type="file" name="image" id="file-input" accept="image/*" class="file-input" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-large" id="submit-btn" disabled>
+          Analyze Damage
+        </button>
+      </form>
+    </section>
+
+    <section class="severity-info card">
+      <h2>Severity Levels</h2>
+      <div class="severity-grid">
+        <div class="severity-item severity-minor">
+          <span class="severity-badge badge-minor">Minor</span>
+          <p>Small dents, scratches, or scuffs. Surface-level damage with no structural impact.</p>
+        </div>
+        <div class="severity-item severity-moderate">
+          <span class="severity-badge badge-moderate">Moderate</span>
+          <p>Visible panel damage, broken lights, or bumper deformation. May require part replacement.</p>
+        </div>
+        <div class="severity-item severity-severe">
+          <span class="severity-badge badge-severe">Severe</span>
+          <p>Structural damage, crumpled frame, or major deformation. Likely needs extensive repair.</p>
+        </div>
+      </div>
+    </section>
+
+    {% endif %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Powered by Transfer Learning &mdash; VGG16, ResNet50, MobileNetV2</p>
+      <a href="{{ url_for('about') }}" class="footer-link">About</a>
+    </div>
+  </footer>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const previewImg = document.getElementById('preview-img');
+    const dropText = document.getElementById('drop-text');
+    const submitBtn = document.getElementById('submit-btn');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) showPreview(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) showPreview(fileInput.files[0]);
+    });
+
+    function showPreview(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        previewImg.classList.remove('hidden');
+        dropText.classList.add('hidden');
+        submitBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+
+      // sync to actual input if dropped
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+    }
+  </script>
+</body>
+</html>
