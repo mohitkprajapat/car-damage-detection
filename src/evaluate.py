@@ -10,7 +10,6 @@ from sklearn.metrics import confusion_matrix
 from src import config
 
 
-# original notebook code + new comparison table
 def eval_top_models(tuner, test_data):
     models_cdp = tuner.get_best_models(num_models=6)
     best_hps = tuner.get_best_hyperparameters(num_trials=6)
@@ -18,19 +17,22 @@ def eval_top_models(tuner, test_data):
     y_true_test = test_data.classes
     fig, axes = plt.subplots(3, 2, figsize=(12, 15))
     axes = axes.flatten()
-
-    # new — comparison table data
+    print(len(models_cdp))
     rows = []
 
     for i in range(len(models_cdp)):
+        test_data.reset()
+        print(i,1)
         model_cdp = models_cdp[i]
-        results = model_cdp.evaluate(test_data, verbose=0)
+        print(i,2)
+        results = model_cdp.evaluate(test_data, verbose=1)
+        print(i,3)
         metric_names = model_cdp.metrics_names
-
-        y_pred_test = model_cdp.predict(test_data, verbose=0)
+        print(i,4)
+        y_pred_test = model_cdp.predict(test_data, verbose=1)
         y_hat_test = y_pred_test.argmax(axis=1)
         cm = confusion_matrix(y_true_test, y_hat_test)
-
+        print(i,5)
         ax = axes[i]
         sns.heatmap(
             cm,
@@ -45,24 +47,22 @@ def eval_top_models(tuner, test_data):
         ax.set_ylabel("True Label")
         title = "Confusion Matrix - " + best_hps[i].values["base model"]
         ax.set_title(title)
-
-        # new — collect metrics for comparison table
+        print(i,6)
         r = {"model": best_hps[i].values["base model"]}
         for name, val in zip(metric_names, results):
             r[name] = round(val, 4)
         rows.append(r)
+        print(i)
 
     plt.tight_layout()
     plt.show()
 
-    # new — print comparison table
     df = pd.DataFrame(rows)
     print("\nModel Comparison Table:")
     print(df.to_string(index=False))
     return df
 
 
-# original notebook code
 def show_misclassified(model, test_data):
     y_pred_test = model.predict(test_data, verbose=0)
     y_hat_test = y_pred_test.argmax(axis=1)
@@ -85,3 +85,21 @@ def show_misclassified(model, test_data):
         j += 1
 
     plt.show()
+
+
+if __name__ == "__main__":
+    import keras_tuner as kt
+    from src.model import transfer_model
+    from src.dataset import get_datasets
+
+    train_ds, val_ds, test_data = get_datasets()
+
+    tuner_b = kt.GridSearch(
+        transfer_model,
+        objective=kt.Objective("val_accuracy", direction="max"),
+        directory=config.tuner_dir,
+        project_name=config.tuner_project,
+        overwrite=False,
+    )
+
+    results_df = eval_top_models(tuner_b, test_data)

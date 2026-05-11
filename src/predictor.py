@@ -1,12 +1,9 @@
 import os
-import uuid
-
+import numpy as np
 import tensorflow as tf
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
+from src import config
 
-from src import config, gradcam
-
-
-# new
 class Predictor:
     def __init__(self):
         if not os.path.exists(config.model_path):
@@ -15,9 +12,6 @@ class Predictor:
         self.labels = config.class_labels
 
     def predict(self, img_path):
-        import numpy as np
-        from tensorflow.keras.preprocessing.image import img_to_array, load_img
-
         img = load_img(img_path, target_size=config.img_shape)
         arr = img_to_array(img)
         arr = np.expand_dims(arr, axis=0)
@@ -28,10 +22,3 @@ class Predictor:
             "confidence": float(preds[idx]),
             "probs": {self.labels[i]: float(preds[i]) for i in range(len(self.labels))},
         }
-
-    def predict_with_gradcam(self, img_path, save_dir):
-        result = self.predict(img_path)
-        # Just reuse the uploaded image as the display image (no Grad-CAM)
-        fname = os.path.basename(img_path)
-        result["gradcam_path"] = fname
-        return result

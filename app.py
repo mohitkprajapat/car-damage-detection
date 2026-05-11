@@ -1,11 +1,13 @@
 import os
 import uuid
 from dotenv import load_dotenv
+from src import config
+from src.predictor import Predictor
 from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 load_dotenv()
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
+UPLOAD_DIR = config.upload_path
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # load predictor once at startup
@@ -13,11 +15,6 @@ predictor = None
 predictor_error = None
 
 try:
-    import sys
-
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-    from flask_app.predictor import Predictor
-
     predictor = Predictor()
 except FileNotFoundError as e:
     predictor_error = str(e)
@@ -44,7 +41,7 @@ def predict():
     img_path = os.path.join(UPLOAD_DIR, fname)
     f.save(img_path)
 
-    result = predictor.predict_with_gradcam(img_path, UPLOAD_DIR)
+    result = predictor.predict(img_path)
 
     return render_template(
         "result.html",
@@ -52,7 +49,6 @@ def predict():
         pred_class=result["pred_class"],
         confidence=round(result["confidence"] * 100, 1),
         probs={k: round(v * 100, 1) for k, v in result["probs"].items()},
-        gradcam=result["gradcam_path"],
     )
 
 

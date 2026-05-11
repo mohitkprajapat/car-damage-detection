@@ -9,7 +9,6 @@ from src.dataset import get_datasets
 from src.model import transfer_model
 
 
-# original notebook code
 def run_tuner(train_ds, val_ds):
     os.makedirs(config.ckpt_dir, exist_ok=True)
     os.makedirs("models", exist_ok=True)
@@ -46,11 +45,10 @@ def run_tuner(train_ds, val_ds):
     )
 
     tuner_b.results_summary()
-
+    
     best_model = tuner_b.get_best_models(num_models=1)[0]
     best_model.save(config.model_path)
     print(f"Best model saved to {config.model_path}")
-
     return tuner_b
 
 

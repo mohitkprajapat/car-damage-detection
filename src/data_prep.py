@@ -13,7 +13,6 @@ from tqdm import tqdm
 from src import config
 
 
-# original notebook code
 def split_data():
     source_dir = config.training_dir
     target_base = config.split_dir
@@ -44,7 +43,6 @@ def split_data():
             shutil.copy(os.path.join(src_class_dir, img), os.path.join(train_class_dir, img))
 
 
-# original notebook code
 def augment_data():
     source_dir = config.train_dir
     target_dir = config.train_aug_dir

@@ -3,7 +3,6 @@ from tensorflow.keras.applications import VGG16, MobileNetV2, ResNet50
 from tensorflow.keras.layers import BatchNormalization, Dense, Dropout, GlobalAveragePooling2D
 
 
-# original notebook code — do not modify
 def transfer_model(hp):
     models = ["resnet50", "mobnetv2", "vgg16", "resnet50-165", "mobnetv2-143", "vgg16-15"]
     input_image = (224, 224, 3)

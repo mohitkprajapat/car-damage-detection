@@ -54,12 +54,6 @@
       </div>
     </section>
 
-    <section class="gradcam-section card">
-      <h2>Grad-CAM Visualization</h2>
-      <p class="gradcam-caption">Regions highlighted in red/yellow indicate areas the model focused on.</p>
-      <img src="{{ url_for('static', filename='uploads/' + gradcam) }}" alt="Grad-CAM heatmap overlay" class="gradcam-img" />
-    </section>
-
     <div class="back-wrap">
       <a href="{{ url_for('index') }}" class="btn btn-primary">&#8592; Analyze Another Image</a>
     </div>

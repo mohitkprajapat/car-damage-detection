@@ -1,20 +1,29 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+
 # paths
-data_dir = "data"
-training_dir = "data/training"
-split_dir = "data/split_val_train"
-train_dir = "data/split_val_train/train"
-val_dir = "data/split_val_train/val"
-train_aug_dir = "data/train_augmented"
-test_dir = "data/test"
-ckpt_dir = "checkpoints"
-ckpt_path = "checkpoints/checkpoint.weights.h5"
-tuner_dir = "tuner_results"
+root_dir = os.getenv("ROOT_DIR",os.getcwd())
+data_dir = os.path.join(root_dir,"data")
+training_dir = os.path.join(data_dir,"training")
+split_dir = os.path.join(data_dir,"split_val_train")
+train_dir = os.path.join(split_dir,"train")
+val_dir = os.path.join(split_dir,"val")
+train_aug_dir = os.path.join(data_dir,"train_augmented")
+test_dir = os.path.join(data_dir,"test")
+ckpt_dir = os.path.join(root_dir,"checkpoints")
+ckpt_path = os.path.join(ckpt_dir,"checkpoint.weights.h5")
+tuner_dir = os.path.join(root_dir,"tuner_results")
 tuner_project = "car_damage_tuner"
-model_path = "models/best_model.keras"
+models = os.path.join(root_dir,"models")
+model_path = os.path.join(models,"best_model.keras")
+upload_path = os.path.join(root_dir,"static","uploads")
 
 # training
 img_shape = (224, 224)
 batch_size = 32
+test_batch_size = 32
 split_ratio = 0.1
 aug_count = 3
 epochs = 1
