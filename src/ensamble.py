@@ -23,7 +23,7 @@ def get_val_data():
         target_size=config.img_shape,
         classes=config.class_labels,
         batch_size=256,
-        shuffle=False
+        shuffle=False,
     )
     return val_data
 
@@ -38,14 +38,14 @@ def collect_probs(models, val_data):
         val_data.reset()
         p = m.predict(val_data, verbose=0)
         all_probs.append(p)
-        print(f"  model {i+1}/6 done — solo acc: {(p.argmax(1) == y_true).mean():.4f}")
+        print(f"  model {i + 1}/6 done — solo acc: {(p.argmax(1) == y_true).mean():.4f}")
 
     return np.array(all_probs), y_true  # (6, N, 3), (N,)
 
 
 # average probs for a subset of models, return predicted classes
 def ensemble_pred(probs_subset):
-    avg = probs_subset.mean(axis=0)   # (N, 3)
+    avg = probs_subset.mean(axis=0)  # (N, 3)
     return avg.argmax(axis=1)
 
 
@@ -56,23 +56,25 @@ def search_combos(all_probs, y_true, model_names):
 
     for r in range(1, n + 1):
         for combo in itertools.combinations(range(n), r):
-            subset = all_probs[list(combo)]          # (r, N, 3)
+            subset = all_probs[list(combo)]  # (r, N, 3)
             y_hat = ensemble_pred(subset)
 
-            acc  = (y_hat == y_true).mean()
-            f1   = f1_score(y_true, y_hat, average='macro', zero_division=0)
-            prec = precision_score(y_true, y_hat, average='macro', zero_division=0)
-            rec  = recall_score(y_true, y_hat, average='macro', zero_division=0)
+            acc = (y_hat == y_true).mean()
+            f1 = f1_score(y_true, y_hat, average="macro", zero_division=0)
+            prec = precision_score(y_true, y_hat, average="macro", zero_division=0)
+            rec = recall_score(y_true, y_hat, average="macro", zero_division=0)
 
             names = " + ".join(model_names[i] for i in combo)
-            rows.append({
-                "combo": names,
-                "n_models": r,
-                "accuracy": round(acc, 4),
-                "f1": round(f1, 4),
-                "precision": round(prec, 4),
-                "recall": round(rec, 4),
-            })
+            rows.append(
+                {
+                    "combo": names,
+                    "n_models": r,
+                    "accuracy": round(acc, 4),
+                    "f1": round(f1, 4),
+                    "precision": round(prec, 4),
+                    "recall": round(rec, 4),
+                }
+            )
 
     df = pd.DataFrame(rows).sort_values("accuracy", ascending=False).reset_index(drop=True)
     return df
@@ -86,7 +88,9 @@ def show_results(df, all_probs, y_true, model_names, top_k=10):
     # best combo
     best = df.iloc[0]
     print(f"\nBest combo: {best['combo']}")
-    print(f"  accuracy={best['accuracy']}  f1={best['f1']}  precision={best['precision']}  recall={best['recall']}")
+    print(
+        f"  accuracy={best['accuracy']}  f1={best['f1']}  precision={best['precision']}  recall={best['recall']}"
+    )
 
     # confusion matrix for best combo
     best_idxs = [list(model_names).index(n) for n in best["combo"].split(" + ")]
@@ -95,8 +99,14 @@ def show_results(df, all_probs, y_true, model_names, top_k=10):
 
     cm = confusion_matrix(y_true, y_hat)
     plt.figure(figsize=(6, 5))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-                xticklabels=config.class_labels, yticklabels=config.class_labels)
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=config.class_labels,
+        yticklabels=config.class_labels,
+    )
     plt.title(f"Best Ensemble — {best['combo']}")
     plt.xlabel("Predicted")
     plt.ylabel("True")
@@ -128,9 +138,13 @@ def run(tuner=None, models=None, model_names=None):
     if tuner is not None:
         print("Loading models from tuner...")
         models, hps = load_models(tuner)
-        model_names = np.array([hp.values['base model'] for hp in hps])
+        model_names = np.array([hp.values["base model"] for hp in hps])
     elif models is not None:
-        model_names = np.array(model_names) if model_names else np.array([f"model_{i}" for i in range(len(models))])
+        model_names = (
+            np.array(model_names)
+            if model_names
+            else np.array([f"model_{i}" for i in range(len(models))])
+        )
     else:
         raise ValueError("Pass either tuner= or models= + model_names=")
 
@@ -138,7 +152,7 @@ def run(tuner=None, models=None, model_names=None):
     val_data = get_val_data()
     all_probs, y_true = collect_probs(models, val_data)
 
-    print(f"\nSearching {2**len(models) - 1} combos...")
+    print(f"\nSearching {2 ** len(models) - 1} combos...")
     df = search_combos(all_probs, y_true, model_names)
 
     show_results(df, all_probs, y_true, model_names)

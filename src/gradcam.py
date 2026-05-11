@@ -16,7 +16,7 @@ def _find_last_conv(model):
     for layer in model.layers:
         if isinstance(layer, (Conv2D, DepthwiseConv2D)):
             last_conv, last_backbone = layer, None
-        elif hasattr(layer, 'layers'):
+        elif hasattr(layer, "layers"):
             for sub in layer.layers:
                 if isinstance(sub, (Conv2D, DepthwiseConv2D)):
                     last_conv, last_backbone = sub, layer
@@ -124,5 +124,5 @@ def analyze(model, img_path, class_labels):
         "overlay": overlay,
         "pred_class": pred_class,
         "confidence": confidence,
-        "probs": {class_labels[i]: float(preds[i]) for i in range(len(class_labels))}
+        "probs": {class_labels[i]: float(preds[i]) for i in range(len(class_labels))},
     }

@@ -32,15 +32,22 @@ def eval_top_models(tuner, test_data):
         cm = confusion_matrix(y_true_test, y_hat_test)
 
         ax = axes[i]
-        sns.heatmap(cm, annot=True, fmt="0.2f", cmap="Blues",
-                    xticklabels=config.class_labels, yticklabels=config.class_labels, ax=ax)
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="0.2f",
+            cmap="Blues",
+            xticklabels=config.class_labels,
+            yticklabels=config.class_labels,
+            ax=ax,
+        )
         ax.set_xlabel("Predicted Label")
         ax.set_ylabel("True Label")
-        title = "Confusion Matrix - " + best_hps[i].values['base model']
+        title = "Confusion Matrix - " + best_hps[i].values["base model"]
         ax.set_title(title)
 
         # new — collect metrics for comparison table
-        r = {'model': best_hps[i].values['base model']}
+        r = {"model": best_hps[i].values["base model"]}
         for name, val in zip(metric_names, results):
             r[name] = round(val, 4)
         rows.append(r)
@@ -64,7 +71,7 @@ def show_misclassified(model, test_data):
     misclassified_idx = np.where(y_true_test != y_hat_test)[0]
     show_img = 15
     row = math.ceil(show_img / 3)
-    plt.figure(figsize=(20, row*6))
+    plt.figure(figsize=(20, row * 6))
     j = 1
     for i in misclassified_idx[:show_img]:
         img_path = test_data.filepaths[i]

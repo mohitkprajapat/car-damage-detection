@@ -14,8 +14,10 @@ predictor_error = None
 
 try:
     import sys
+
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from flask_app.predictor import Predictor
+
     predictor = Predictor()
 except FileNotFoundError as e:
     predictor_error = str(e)
@@ -44,12 +46,13 @@ def predict():
 
     result = predictor.predict_with_gradcam(img_path, UPLOAD_DIR)
 
-    return render_template("result.html",
+    return render_template(
+        "result.html",
         uploaded=fname,
         pred_class=result["pred_class"],
         confidence=round(result["confidence"] * 100, 1),
         probs={k: round(v * 100, 1) for k, v in result["probs"].items()},
-        gradcam=result["gradcam_path"]
+        gradcam=result["gradcam_path"],
     )
 
 

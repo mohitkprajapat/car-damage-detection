@@ -17,6 +17,7 @@ class Predictor:
     def predict(self, img_path):
         import numpy as np
         from tensorflow.keras.preprocessing.image import img_to_array, load_img
+
         img = load_img(img_path, target_size=config.img_shape)
         arr = img_to_array(img)
         arr = np.expand_dims(arr, axis=0)
@@ -25,13 +26,12 @@ class Predictor:
         return {
             "pred_class": self.labels[idx],
             "confidence": float(preds[idx]),
-            "probs": {self.labels[i]: float(preds[i]) for i in range(len(self.labels))}
+            "probs": {self.labels[i]: float(preds[i]) for i in range(len(self.labels))},
         }
 
     def predict_with_gradcam(self, img_path, save_dir):
-        result = gradcam.analyze(self.model, img_path, self.labels)
-        fname = f"gradcam_{uuid.uuid4().hex[:8]}.jpg"
-        save_path = os.path.join(save_dir, fname)
-        result["overlay"].save(save_path)
+        result = self.predict(img_path)
+        # Just reuse the uploaded image as the display image (no Grad-CAM)
+        fname = os.path.basename(img_path)
         result["gradcam_path"] = fname
         return result

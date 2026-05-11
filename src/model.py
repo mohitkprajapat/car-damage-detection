@@ -5,11 +5,11 @@ from tensorflow.keras.layers import BatchNormalization, Dense, Dropout, GlobalAv
 
 # original notebook code — do not modify
 def transfer_model(hp):
-    models = ['resnet50', 'mobnetv2', 'vgg16', 'resnet50-165', 'mobnetv2-143', 'vgg16-15']
+    models = ["resnet50", "mobnetv2", "vgg16", "resnet50-165", "mobnetv2-143", "vgg16-15"]
     input_image = (224, 224, 3)
     inputs = tf.keras.Input(shape=input_image)
-    base = hp.Choice('base model', models)
-    bm_list = base.split('-')
+    base = hp.Choice("base model", models)
+    bm_list = base.split("-")
     base_mod = bm_list[0]
 
     if len(bm_list) == 2:
@@ -17,12 +17,9 @@ def transfer_model(hp):
     else:
         lay_num = None
 
-    if base_mod == 'mobnetv2':
+    if base_mod == "mobnetv2":
         mob_net_fine_tune_at = lay_num
-        base_model = MobileNetV2(
-           input_shape=input_image,
-           include_top=False,
-           weights='imagenet')
+        base_model = MobileNetV2(input_shape=input_image, include_top=False, weights="imagenet")
         base_model.trainable = True
         if mob_net_fine_tune_at is not None:
             for layer in base_model.layers[:mob_net_fine_tune_at]:
@@ -31,12 +28,9 @@ def transfer_model(hp):
             base_model.trainable = False
         x = tf.keras.applications.mobilenet_v2.preprocess_input(inputs)
 
-    elif base_mod == 'resnet50':
+    elif base_mod == "resnet50":
         resnet_fine_tune_at = lay_num
-        base_model = ResNet50(
-           input_shape=input_image,
-           include_top=False,
-           weights='imagenet')
+        base_model = ResNet50(input_shape=input_image, include_top=False, weights="imagenet")
         base_model.trainable = True
         if resnet_fine_tune_at is not None:
             for layer in base_model.layers[:resnet_fine_tune_at]:
@@ -45,7 +39,7 @@ def transfer_model(hp):
             base_model.trainable = False
         x = tf.keras.applications.resnet.preprocess_input(inputs)
 
-    elif base_mod == 'vgg16':
+    elif base_mod == "vgg16":
         vggnet_fine_tune_at = lay_num
         base_model = VGG16(
            input_shape=input_image,
@@ -86,7 +80,9 @@ def transfer_model(hp):
     model = tf.keras.Model(inputs, outputs)
 
     base_learning_rate = 0.01
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
-                  loss=tf.keras.losses.CategoricalCrossentropy(),
-                  metrics=['accuracy', 'recall', 'f1_score', 'precision'])
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
+        loss=tf.keras.losses.CategoricalCrossentropy(),
+        metrics=["accuracy", "recall", "f1_score", "precision"],
+    )
     return model

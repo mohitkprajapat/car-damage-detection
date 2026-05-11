@@ -24,7 +24,7 @@ def split_data():
 
     for class_name in class_labels:
         src_class_dir = os.path.join(source_dir, class_name)
-        file_ext = ('.jpg', '.jpeg', '.png')
+        file_ext = (".jpg", ".jpeg", ".png")
         images = [f for f in os.listdir(src_class_dir) if f.lower().endswith(file_ext)]
         random.shuffle(images)
 
@@ -56,7 +56,7 @@ def augment_data():
         height_shift_range=0.1,
         zoom_range=0.2,
         horizontal_flip=True,
-        fill_mode='nearest'
+        fill_mode="nearest",
     )
 
     class_labels = config.class_labels
@@ -68,7 +68,7 @@ def augment_data():
         os.makedirs(target_class_dir, exist_ok=True)
 
         for image_file in tqdm(os.listdir(source_class_dir), desc=f"Processing {class_name}"):
-            if not image_file.lower().endswith(('.jpg', '.jpeg', '.png')):
+            if not image_file.lower().endswith((".jpg", ".jpeg", ".png")):
                 continue
 
             img_path = os.path.join(source_class_dir, image_file)
@@ -81,10 +81,10 @@ def augment_data():
 
             aug_iter = augmentor.flow(image_array, batch_size=1)
             for i in range(config.aug_count):
-                aug_image = next(aug_iter)[0].astype('uint8')
+                aug_image = next(aug_iter)[0].astype("uint8")
                 aug_pil = array_to_img(aug_image)
 
-                save_name = f"{os.path.splitext(image_file)[0]}_aug{i+1}.jpg"
+                save_name = f"{os.path.splitext(image_file)[0]}_aug{i + 1}.jpg"
                 save_path = os.path.join(target_class_dir, save_name)
                 aug_pil.save(save_path)
 

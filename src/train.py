@@ -15,13 +15,15 @@ def run_tuner(train_ds, val_ds):
     os.makedirs("models", exist_ok=True)
 
     earlystop_callback = tf.keras.callbacks.EarlyStopping(
-        monitor="val_accuracy", patience=config.patience, restore_best_weights=True)
+        monitor="val_accuracy", patience=config.patience, restore_best_weights=True
+    )
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        config.ckpt_path, monitor='val_accuracy', verbose=0, save_best_only=True)
+        config.ckpt_path, monitor="val_accuracy", verbose=0, save_best_only=True
+    )
 
     tuner_b = kt.GridSearch(
         transfer_model,
-        objective=kt.Objective('val_accuracy', direction="max"),
+        objective=kt.Objective("val_accuracy", direction="max"),
         directory=config.tuner_dir,
         project_name=config.tuner_project,
         overwrite=True,
@@ -31,16 +33,16 @@ def run_tuner(train_ds, val_ds):
         train_ds,
         validation_data=val_ds,
         epochs=config.epochs,
-        callbacks=[earlystop_callback, checkpoint_callback]
+        callbacks=[earlystop_callback, checkpoint_callback],
     )
 
     # reload with overwrite=False to retain results
     tuner_b = kt.GridSearch(
         transfer_model,
-        objective=kt.Objective('val_accuracy', direction="max"),
+        objective=kt.Objective("val_accuracy", direction="max"),
         directory=config.tuner_dir,
         project_name=config.tuner_project,
-        overwrite=False
+        overwrite=False,
     )
 
     tuner_b.results_summary()
