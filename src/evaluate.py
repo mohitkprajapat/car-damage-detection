@@ -22,17 +22,12 @@ def eval_top_models(tuner, test_data):
 
     for i in range(len(models_cdp)):
         test_data.reset()
-        print(i,1)
         model_cdp = models_cdp[i]
-        print(i,2)
         results = model_cdp.evaluate(test_data, verbose=1)
-        print(i,3)
         metric_names = model_cdp.metrics_names
-        print(i,4)
         y_pred_test = model_cdp.predict(test_data, verbose=1)
         y_hat_test = y_pred_test.argmax(axis=1)
         cm = confusion_matrix(y_true_test, y_hat_test)
-        print(i,5)
         ax = axes[i]
         sns.heatmap(
             cm,
@@ -47,7 +42,6 @@ def eval_top_models(tuner, test_data):
         ax.set_ylabel("True Label")
         title = "Confusion Matrix - " + best_hps[i].values["base model"]
         ax.set_title(title)
-        print(i,6)
         r = {"model": best_hps[i].values["base model"]}
         for name, val in zip(metric_names, results):
             r[name] = round(val, 4)

@@ -22,8 +22,8 @@ upload_path = os.path.join(root_dir,"static","uploads")
 
 # training
 img_shape = (224, 224)
-batch_size = 32
-test_batch_size = 32
+batch_size = 64
+test_batch_size = 64
 split_ratio = 0.1
 aug_count = 3
 epochs = 1

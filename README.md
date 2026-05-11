@@ -23,51 +23,6 @@ The original work lives in `notebooks/Car_Damage_Severity_Detection.ipynb`. This
 
 ---
 
-## What's New Beyond the Notebook
-
-| Feature | Details |
-|---|---|
-| **Grad-CAM** | Automatic last-conv-layer detection, heatmap overlay on predictions |
-| **Model comparison table** | Pandas DataFrame with accuracy, F1, precision, recall across top-6 models |
-| **Flask web app** | Drag-and-drop upload, live prediction, probability bars, Grad-CAM display |
-
----
-
-## Directory Structure
-
-```
-car-damage-severity/
-├── data/                          # not in git
-│   ├── training/
-│   ├── split_val_train/
-│   ├── train_augmented/
-│   └── test/
-├── models/                        # not in git
-│   └── best_model.keras
-├── checkpoints/
-├── tuner_results/
-├── src/
-│   ├── config.py
-│   ├── data_prep.py
-│   ├── dataset.py
-│   ├── model.py
-│   ├── train.py
-│   ├── evaluate.py
-│   └── gradcam.py
-├── flask_app/
-│   ├── app.py
-│   ├── predictor.py
-│   ├── static/css/style.css
-│   └── templates/
-│       ├── index.html
-│       └── result.html
-├── notebooks/
-│   └── Car_Damage_Severity_Detection.ipynb
-├── requirements.txt
-└── README.md
-```
-
----
 
 ## Setup & Usage
 
@@ -121,4 +76,3 @@ Open `http://localhost:5000` in your browser.
 - Flask
 - NumPy, Pandas, Matplotlib, Seaborn
 - scikit-learn
-- Pillow
