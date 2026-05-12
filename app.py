@@ -13,11 +13,17 @@ from utils.utils import clear_old_uploads
 from utils.auth import login_required, safe_compare, _set_role, LoginForm, limiter
 from flask import Flask, redirect, render_template, request, url_for, session
 
-
-app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
-USER_PASSWORD = os.getenv("USER_LOGIN_PASSWORD")
 load_dotenv()
+
+def create_app():
+    app = Flask(__name__)
+    app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
+    limiter.init_app(app)
+    return app
+
+app = create_app()
+
+USER_PASSWORD = os.getenv("USER_LOGIN_PASSWORD")
 UPLOAD_DIR = config.upload_path
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -42,6 +48,7 @@ def index():
 
 @app.route("/predict", methods=["POST"])
 @login_required
+@limiter.limit("30 per day")
 def predict():
     if predictor is None:
         return render_template("index.html", error=predictor_error)
@@ -92,4 +99,5 @@ def logout():
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", port=8080, debug=debug_mode)

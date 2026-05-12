@@ -6,6 +6,10 @@ venv/
 *.egg-info/
 .ipynb_checkpoints/
 .DS_Store
+ngrok.bat
+ngrok.exe
+.dockerignore
+docker-compose.yml
 
 # Python-generated files
 __pycache__/

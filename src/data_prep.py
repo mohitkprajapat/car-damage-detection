@@ -46,6 +46,8 @@ def split_data():
 def augment_data():
     source_dir = config.train_dir
     target_dir = config.train_aug_dir
+    if os.path.exists(target_dir):
+        shutil.rmtree(target_dir)
     os.makedirs(target_dir, exist_ok=True)
 
     augmentor = ImageDataGenerator(

@@ -2,6 +2,8 @@ import tensorflow as tf
 from tensorflow.keras.applications import VGG16, MobileNetV2, ResNet50
 from tensorflow.keras.layers import BatchNormalization, Dense, Dropout, GlobalAveragePooling2D
 
+from src import config
+
 
 def transfer_model(hp):
     models = ["resnet50", "mobnetv2", "vgg16", "resnet50-165", "mobnetv2-143", "vgg16-15"]
@@ -54,8 +56,8 @@ def transfer_model(hp):
 
     x = base_model(x)
 
-    dropout_rate = 0.2
-    L2_reg_rate = 0.01
+    dropout_rate = config.dropout
+    L2_reg_rate = config.l2
 
     x = GlobalAveragePooling2D()(x)
     x = Dropout(rate=dropout_rate)(x)
@@ -78,7 +80,7 @@ def transfer_model(hp):
 
     model = tf.keras.Model(inputs, outputs)
 
-    base_learning_rate = 0.01
+    base_learning_rate = config.lr
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
         loss=tf.keras.losses.CategoricalCrossentropy(),

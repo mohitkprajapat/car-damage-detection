@@ -26,7 +26,9 @@ class Predictor:
             )
 
     def _load_combo(self,models_path: str) -> list:
-        model_dirs = [d for d in os.listdir(MODELS_PATH) if d.startswith("model_")]
+        model_dirs = model_dirs = sorted(
+            [d for d in os.listdir(MODELS_PATH) if d.startswith("model_")]
+            )
         
         self._models = [tf.keras.models.load_model(os.path.join(models_path, d)) for d in model_dirs]
 

@@ -16,7 +16,7 @@ ckpt_dir = os.path.join(root_dir,"checkpoints")
 ckpt_path = os.path.join(ckpt_dir,"checkpoint.weights.h5")
 tuner_dir = os.path.join(root_dir,"tuner_results")
 tuner_project = "car_damage_tuner"
-models = os.path.join(root_dir,"models")
+models = os.getenv("MODEL_DIR",os.getcwd())
 model_path = os.path.join(models,"best_model.keras")
 upload_path = os.path.join(root_dir,"static","uploads")
 
