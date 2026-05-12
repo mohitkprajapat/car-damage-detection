@@ -3,6 +3,7 @@ import uuid
 from dotenv import load_dotenv
 from src import config
 from src.predictor import Predictor
+from src.utils import clear_old_uploads
 from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
@@ -24,6 +25,7 @@ except Exception as e:
 
 @app.route("/")
 def index():
+    clear_old_uploads()
     return render_template("index.html", error=predictor_error)
 
 

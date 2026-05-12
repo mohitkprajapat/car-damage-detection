@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 from typing import Callable
 import os
+import json
 import numpy as np
 import pandas as pd
 
@@ -174,7 +175,7 @@ def report_individual_baselines(
         print(f"{name:<25} {acc:>9.4f}")
 
 COMBO_MANIFEST_PATH = os.path.join(config.models, "best_combo.json")
- 
+MODELS_PATH = os.path.join(config.models,"best_models")
  
 def save_best_combo(
     results_df: pd.DataFrame,
@@ -189,11 +190,29 @@ def save_best_combo(
         "accuracy":      float(best_row["accuracy"]),
         "combo_size":    int(best_row["combo_size"]),
     }
+
+    indices = best_row["model_indices"]
+    n_to_load = max(indices) + 1
  
     os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
-    import json
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
+ 
+    tuner = kt.GridSearch(
+            transfer_model,
+            objective=kt.Objective("val_accuracy", direction="max"),
+            directory=config.tuner_dir,
+            project_name=config.tuner_project,
+            overwrite=False,
+        )
+    
+    all_models = tuner.get_best_models(num_models=n_to_load)
+    models = [all_models[i] for i in indices]
+
+    os.makedirs(MODELS_PATH, exist_ok=True)
+    for i, model in zip(indices, models):
+        model_save_path = os.path.join(MODELS_PATH, f"model_{i}.keras")
+        model.save(model_save_path)
  
     print(f"\nBest combo saved to {manifest_path}")
     print(f"  Models : {' + '.join(manifest['model_names'])}")

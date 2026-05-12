@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 from src import config
-from src.ensemble import COMBO_MANIFEST_PATH, majority_vote
+from src.ensemble import MODELS_PATH, majority_vote
 from src.model import transfer_model
 
 
@@ -16,8 +16,8 @@ class Predictor:
         self.labels = config.class_labels
         self._vote_fn = majority_vote
 
-        if os.path.exists(COMBO_MANIFEST_PATH):
-            self._load_combo(COMBO_MANIFEST_PATH)
+        if os.path.exists(MODELS_PATH):
+            self._load_combo(MODELS_PATH)
         elif os.path.exists(config.model_path):
             print("No combo manifest found — loading single best model.")
             self._models = [tf.keras.models.load_model(config.model_path)]
@@ -26,29 +26,13 @@ class Predictor:
                 "No model found. Run ensemble_eval.main() or train a model first."
             )
 
-    def _load_combo(self, manifest_path: str) -> None:
-        with open(manifest_path) as f:
-            manifest = json.load(f)
-
-        indices: list[int] = manifest["model_indices"]
-        names: list[str] = manifest["model_names"]
-        n_to_load = max(indices) + 1 
-
-        tuner = kt.GridSearch(
-            transfer_model,
-            objective=kt.Objective("val_accuracy", direction="max"),
-            directory=config.tuner_dir,
-            project_name=config.tuner_project,
-            overwrite=False,
+    def _load_combo(self,models_path: str) -> list:
+        model_dirs = sorted(
+            [d for d in os.listdir(models_path) if d.startswith("model_")],
+            key=lambda x: int(x.split("_")[1])
         )
-
-        all_models = tuner.get_best_models(num_models=n_to_load)
-        self._models = [all_models[i] for i in indices]
-
-        print(
-            f"Loaded {'ensemble' if len(indices) > 1 else 'single'} combo "
-            f"({' + '.join(names)})  |  test accuracy: {manifest['accuracy']:.4f}"
-        )
+        
+        self._models = [tf.keras.models.load_model(os.path.join(models_path, d)) for d in model_dirs]
 
     def predict(self, img_path: str) -> dict:
         img = load_img(img_path, target_size=config.img_shape)
