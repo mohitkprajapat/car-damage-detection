@@ -8,7 +8,6 @@ from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 from src import config
 from src.ensemble import MODELS_PATH, majority_vote
-from src.model import transfer_model
 
 
 class Predictor:
@@ -27,10 +26,7 @@ class Predictor:
             )
 
     def _load_combo(self,models_path: str) -> list:
-        model_dirs = sorted(
-            [d for d in os.listdir(models_path) if d.startswith("model_")],
-            key=lambda x: int(x.split("_")[1])
-        )
+        model_dirs = [d for d in os.listdir(MODELS_PATH) if d.startswith("model_")]
         
         self._models = [tf.keras.models.load_model(os.path.join(models_path, d)) for d in model_dirs]
 

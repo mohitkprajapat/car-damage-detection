@@ -1,12 +1,22 @@
 import os
+import warnings
+
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+warnings.filterwarnings('ignore')
+
 import uuid
 from dotenv import load_dotenv
 from src import config
 from src.predictor import Predictor
-from src.utils import clear_old_uploads
-from flask import Flask, redirect, render_template, request, url_for
+from utils.utils import clear_old_uploads
+from utils.auth import login_required, safe_compare, _set_role, LoginForm, limiter
+from flask import Flask, redirect, render_template, request, url_for, session
+
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
+USER_PASSWORD = os.getenv("USER_LOGIN_PASSWORD")
 load_dotenv()
 UPLOAD_DIR = config.upload_path
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -24,12 +34,14 @@ except Exception as e:
 
 
 @app.route("/")
+@login_required
 def index():
-    clear_old_uploads()
+    clear_old_uploads(UPLOAD_DIR)
     return render_template("index.html", error=predictor_error)
 
 
 @app.route("/predict", methods=["POST"])
+@login_required
 def predict():
     if predictor is None:
         return render_template("index.html", error=predictor_error)
@@ -55,9 +67,29 @@ def predict():
 
 
 @app.route("/about")
+@login_required
 def about():
     return render_template("index.html", show_about=True, error=predictor_error)
 
+
+@app.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        password = form.password.data
+        if safe_compare(password, USER_PASSWORD):
+            _set_role("user")
+            return redirect(url_for("index"))
+        else:
+            return render_template("login.html", form=form, error="Invalid password")
+    return render_template("login.html", form=form)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 if __name__ == "__main__":
     app.run(debug=True)
