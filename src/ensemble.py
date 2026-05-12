@@ -66,8 +66,37 @@ def collect_predictions(
         probs = model.predict(test_data, verbose=0)  # shape (n_samples, n_classes)
         all_probs.append(probs)
 
+    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+    np.savez(
+        cache_path,
+        y_true=y_true,
+        model_names=np.array(model_names),
+        **{f"probs_{i}": probs for i, probs in enumerate(all_probs)},
+    )
+    print(f"  Saved predictions to {cache_path}")
+
     return y_true, all_probs, model_names
 
+ 
+def rerank_combinations(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+
+    df["rank_accuracy"]    = df["accuracy"].rank(ascending=False, method="min")
+    df["rank_confidence"]  = df["mean_confidence"].rank(ascending=False, method="min")
+    df["rank_size"]        = df["combo_size"].rank(ascending=True,  method="dense")
+
+    offset = 60
+    df["harmonic_mean_rank"] = 3 / (
+        1 / (df["rank_accuracy"]+ offset) +
+        1 / (df["rank_confidence"]+ offset) +
+        1 / (df["rank_size"]+ offset)
+    ) - offset
+
+    df["final_rank"] = df["harmonic_mean_rank"].rank(ascending=True, method="min").astype(int)
+
+    df = df.sort_values("final_rank")
+
+    return df
 
 def evaluate_ensembles(
     y_true: np.ndarray,
@@ -83,12 +112,12 @@ def evaluate_ensembles(
     rows: list[dict] = []
 
     total_combos = sum(
-        len(list(itertools.combinations(range(n), r))) for r in range(2, n + 1)
+        len(list(itertools.combinations(range(n), r))) for r in range(1, n + 1)
     )
     print(f"\nEvaluating {total_combos} ensemble combinations …\n")
 
     combo_num = 0
-    for r in range(2, n + 1):
+    for r in range(1, n + 1):
         for indices in itertools.combinations(range(n), r):
             combo_num += 1
 
@@ -116,7 +145,9 @@ def evaluate_ensembles(
                 }
             )
 
-    df = pd.DataFrame(rows).sort_values("accuracy", ascending=False).reset_index(drop=True)
+    df = pd.DataFrame(rows)
+    df = rerank_combinations(df)
+    df = df.reset_index(drop=True)
 
     print(f"{'Rank':<5} {'Accuracy':>9} {'Mean Conf':>10} {'Size':>5}  Models")
     print("─" * 80)
