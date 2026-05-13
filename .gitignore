@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+.DS_Store
+ngrok.bat
+ngrok.exe
+.dockerignore
+docker-compose.yml
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+*.pem

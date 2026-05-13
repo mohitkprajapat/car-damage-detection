@@ -1,0 +1,6 @@
+*
+!.gitignore
+!best_models/
+best_models/*
+!best_models/*.keras
+!best_model.keras
