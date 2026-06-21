@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Label Review — Car Damage Detector</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="site-title">Car Damage Severity Detector</h1>
+      <p class="site-subtitle">Human review — confirm true labels</p>
+    </div>
+  </header>
+
+  <main class="container main-content">
+
+    {% if rows %}
+    <p>{{ rows|length }} image(s) awaiting a true label.</p>
+
+    <div class="review-grid">
+      {% for row in rows %}
+      <div class="card review-card">
+        <img src="{{ url_for('static', filename='uploads/' + row.image_path) }}"
+             alt="Upload pending review" class="result-img" />
+
+        <div class="review-meta">
+          <span class="pred-badge badge-{{ row.pred_class }}">{{ row.pred_class | capitalize }}</span>
+          {% if row.confidence_pct is not none %}
+          <span class="confidence-label">Model confidence: {{ row.confidence_pct }}%</span>
+          {% endif %}
+        </div>
+
+        <form method="POST" action="{{ url_for('review_label') }}" class="review-form">
+          <input type="hidden" name="image_path" value="{{ row.image_path }}" />
+          {% for label in class_labels %}
+          <button type="submit" name="true_label" value="{{ label }}" class="btn btn-primary btn-small">
+            {{ label | capitalize }}
+          </button>
+          {% endfor %}
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+      <p>No images awaiting review. You're caught up.</p>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Powered by Transfer Learning &mdash; VGG16, ResNet50, MobileNetV2</p>
+      <a href="{{ url_for('index') }}" class="footer-link">Back to Detector</a>
+    </div>
+  </footer>
+</body>
+</html>

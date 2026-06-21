@@ -8,12 +8,14 @@ warnings.filterwarnings('ignore')
 import uuid
 
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, session, url_for, send_file
 
 from src import config
 from src.predictor import Predictor
 from utils.auth import LoginForm, _set_role, limiter, login_required, safe_compare
-from utils.utils import clear_old_uploads
+from utils.utils import clear_old_uploads, is_report_stale
+from monitoring.data_collection import get_unlabeled_rows, log_prediction, set_true_label
+from monitoring.monitoring import evi_monitor
 
 load_dotenv()
 
@@ -43,7 +45,8 @@ except Exception as e:
 @app.route("/")
 @login_required
 def index():
-    clear_old_uploads(UPLOAD_DIR)
+    unlabeled_files = {row["image_path"] for row in get_unlabeled_rows()}
+    clear_old_uploads(UPLOAD_DIR, protect=unlabeled_files)
     return render_template("index.html", error=predictor_error)
 
 
@@ -64,6 +67,7 @@ def predict():
     f.save(img_path)
 
     result = predictor.predict(img_path)
+    log_prediction(result, fname)
 
     return render_template(
         "result.html",
@@ -80,6 +84,34 @@ def predict():
 def about():
     return render_template("index.html", show_about=True, error=predictor_error)
 
+@app.route("/review")
+@login_required
+def review():
+    rows = get_unlabeled_rows()
+    for row in rows:
+        try:
+            row["confidence_pct"] = round(float(row["confidence"]) * 100, 1)
+        except (TypeError, ValueError):
+            row["confidence_pct"] = None
+    return render_template("review.html", rows=rows, class_labels=config.class_labels)
+
+
+@app.route("/review/label", methods=["POST"])
+@login_required
+def review_label():
+    image_path = request.form.get("image_path")
+    true_label = request.form.get("true_label")
+    if image_path and true_label:
+        set_true_label(image_path, true_label)
+    return redirect(url_for("review"))
+
+@app.route("/monitor")
+@login_required
+def monitor():
+    is_old = is_report_stale()
+    if is_old:
+        evi_monitor()
+    return render_template("monitor.html")
 
 @app.route("/login", methods=["GET", "POST"])
 @limiter.limit("10 per minute")
@@ -103,6 +135,12 @@ def nologin():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+
+@app.route('/favicon.ico')
+def favicon():
+    FEVICON_PATH = os.path.join(config.root_dir, "static", "images","favicon.png")
+    return send_file(FEVICON_PATH, mimetype='image/png')
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"

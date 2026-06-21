@@ -37,3 +37,5 @@ dropout = 0.2
 l2 = 0.01
 lr = 0.01
 seed = 42
+
+monitor_stale = 6
