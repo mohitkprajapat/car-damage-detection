@@ -33,9 +33,11 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cardamage:latest
             docker stop cardamage || true
             docker rm cardamage   || true
+            docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/cardamage:latest || true
+            docker system prune -af
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/cardamage:latest
             docker run -d \
               --name cardamage \
               --restart unless-stopped \
